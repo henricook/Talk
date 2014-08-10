@@ -22,13 +22,14 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val monocleVersion = "0.5.1-SNAPSHOT"
+  val monocleVersion    = "0.5.1-SNAPSHOT"
   val monocleCore       = "com.github.julien-truffaut"  %%  "monocle-core"             % monocleVersion changing()
   val monocleMacro      = "com.github.julien-truffaut"  %%  "monocle-macro"            % monocleVersion changing()
   val scalaz            = "org.scalaz"                  %% "scalaz-core"               % "7.1.0"
   val scalaCheckBinding = "org.scalaz"                  %% "scalaz-scalacheck-binding" % "7.1.0" % "test"
   val specs2Scalacheck  = "org.specs2"                  %% "specs2-scalacheck"         % "2.4"
   val scalazSpec2       = "org.typelevel"               %% "scalaz-specs2"             % "0.2"   % "test"
+  val paradisePlugin    = compilerPlugin("org.scalamacros" % "paradise" %  "2.0.1" cross CrossVersion.full)
 }
 
 object TalkBuild extends Build {
@@ -46,6 +47,7 @@ object TalkBuild extends Build {
     "measure-core",
     file("monocleIntro"),
     settings = buildSettings ++ Seq(
+      addCompilerPlugin(paradisePlugin),
       libraryDependencies ++= Seq(monocleCore, monocleMacro, scalaz, specs2Scalacheck, scalazSpec2)
     )
   )
