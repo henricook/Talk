@@ -1,17 +1,14 @@
+## IntelliJ files to ignore
+*.iml
+*.iws
+*.ipr
+.idea
+.idea/*
+
+## NetBeans files to ignore
+.*_nb
+
+## scala specific files to ignore
 *.class
-*.log
-
-# sbt specific
-.cache/
-.history/
-.lib/
-dist/*
 target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
-
-# Scala-IDE specific
-.scala_dependencies
-.worksheet
+project/project/
