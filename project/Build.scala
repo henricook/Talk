@@ -45,8 +45,8 @@ object TalkBuild extends Build {
   )) aggregate(monocleIntro)
 
   lazy val monocleIntro: Project = Project(
-    "measure-core",
-    file("monocleIntro"),
+    "optics-introduction",
+    file("opticsIntroduction"),
     settings = buildSettings ++ Seq(
       addCompilerPlugin(paradisePlugin),
       libraryDependencies ++= Seq(monocleCore, monocleMacro, monocleGeneric, scalaz, shapeless, specs2Scalacheck, scalazSpec2)
