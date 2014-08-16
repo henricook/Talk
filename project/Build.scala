@@ -12,7 +12,6 @@ object BuildSettings {
   val buildSettings = typelevelDefaultSettings ++ Seq(
     organization       := "com.github.julien-truffaut",
     scalaVersion       := buildScalaVersion,
-    crossScalaVersions := Seq("2.10.4", "2.11.2"),
     scalacOptions     ++= Seq("-deprecation", "-unchecked", "-feature",
       "-language:higherKinds", "-language:implicitConversions", "-language:postfixOps"),
     incOptions         := incOptions.value.withNameHashing(true),
@@ -23,9 +22,11 @@ object BuildSettings {
 
 object Dependencies {
   val monocleVersion    = "0.5.1-SNAPSHOT"
-  val monocleCore       = "com.github.julien-truffaut"  %%  "monocle-core"             % monocleVersion changing()
-  val monocleMacro      = "com.github.julien-truffaut"  %%  "monocle-macro"            % monocleVersion changing()
+  val monocleCore       = "com.github.julien-truffaut"  %% "monocle-core"              % monocleVersion changing()
+  val monocleMacro      = "com.github.julien-truffaut"  %% "monocle-macro"             % monocleVersion changing()
+  val monocleGeneric    = "com.github.julien-truffaut"  %% "monocle-generic"           % monocleVersion changing()
   val scalaz            = "org.scalaz"                  %% "scalaz-core"               % "7.1.0"
+  val shapeless         = "com.chuusai"                 %% "shapeless"                 % "2.0.0"
   val scalaCheckBinding = "org.scalaz"                  %% "scalaz-scalacheck-binding" % "7.1.0" % "test"
   val specs2Scalacheck  = "org.specs2"                  %% "specs2-scalacheck"         % "2.4"
   val scalazSpec2       = "org.typelevel"               %% "scalaz-specs2"             % "0.2"   % "test"
@@ -48,7 +49,7 @@ object TalkBuild extends Build {
     file("monocleIntro"),
     settings = buildSettings ++ Seq(
       addCompilerPlugin(paradisePlugin),
-      libraryDependencies ++= Seq(monocleCore, monocleMacro, scalaz, specs2Scalacheck, scalazSpec2)
+      libraryDependencies ++= Seq(monocleCore, monocleMacro, monocleGeneric, scalaz, shapeless, specs2Scalacheck, scalazSpec2)
     )
   )
 }
