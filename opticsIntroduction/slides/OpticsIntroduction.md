@@ -1,18 +1,26 @@
 #  Optics Introduction
 
-
 ---
 
 # Lens 
 
 ```scala
 trait Lens[S, A]{
+
   def get(s: S): A
+
   def set(s: S, a: A): S
   def modify(s: S, f: A => A): S
   
   def compose[B](other: Lens[A, B]): Lens[S, B]
 }
+```
+---
+
+# Lens Laws
+
+```scala
+
 
 ∀ s: S       => set(s, get(s)) == s 
 ∀ s: S, a: A => get(set(s, a)) == a 
@@ -34,13 +42,13 @@ case class EndPointConfig(protocol: String, host: String, port: Int)
 
 val config: AppConfig = ???
 
-config.copy(client = config.client.copy(
+config.copy(
   client = config.client.copy(
-    endPoint = config.client.endpoint.copy(
+    endpoint = config.client.endpoint.copy(
       port = 5000
     )
   )
-))
+)
 ```
 
 ---
@@ -51,14 +59,14 @@ config.copy(client = config.client.copy(
 
 
 import monocle.Lenses
-@Lenses case class AppConfig(clients: ClientConfig, switches: Switches)
+@Lenses case class AppConfig(client: ClientConfig, switches: Switches)
 ...
 
 import AppConfig._, Switches._, ClientConfig._, EndPointConfig._
 (client compose endPoint compose port).set(config, 5000)
 
 import monocle.syntax._
-config |-> clients |-> twitter |-> TwitterConfig.endPoint |-> port set 5000
+config |-> client |-> endPoint |-> port set 5000
 ```
 
 ---
@@ -91,6 +99,7 @@ toogleAllFeatures(config)
 
 ```scala
 trait Prism[S, A]{
+
   def getOption(s: S): Option[A]
   def reverseGet(a: A): S
   
@@ -99,6 +108,13 @@ trait Prism[S, A]{
   
   def compose[B](other: Prism[A, B]): Prism[S, B]
 }
+```
+
+---
+
+# Prism Laws
+
+```scala
 
 ∀ a: A => getOption . reverseGet == Some(a) 
 ∀ s: S => getOption(s) map reverseGet == Some(s) || None
@@ -144,12 +160,29 @@ some.get(None)    == None    // Impressive :p
 some.modify(Some(3), _ * 2) == Some(6)
 
 def cons[A] = Prism[List[A], (A, List[A])]({
-	case Nil => None
+	case Nil     => None
 	case x :: xs => Some(x, xs)
 }, (x, xs) => x :: xs)
 
 cons.get(List(1,2,3)) == Some(1, List(2, 3))
 cons.get(Nil)         == None
+```
+---
+
+# Optics Composition
+
+```scala
+Lens[S, A]  compose Prism[A, B] = ???[S, B]
+Prism[S, A] compose Lens[A, B]  = ???[S, B]
+
+val example1 = Some(Person("John", 25))
+
+(some compose age) ???
+
+val example2 = Person("John", 25, Some("john@gmail.com"))
+
+(email compose some) ???
+
 ```
 
 ---
@@ -166,13 +199,7 @@ trait Optional[S, A]{
   def compose[B](other: Optional[A, B]): Optional[S, B]
   def compose[B](other: Lens[A, B]): Optional[S, B]
   def compose[B](other: Prism[A, B]): Optional[S, B]
-}
-
-∀ s: S, a: A => getOption(set(s, a)) == getOption(s) map (_ => a)
-
-∀ s: S, a: A        => set(s, set(s, a)) == set(s, a) 
-∀ s: S              => modify(s, id)  == s  
-∀ s: S, f,g: A => A => modifyF(f) . modifyF(g) == modifyF(f compose g)          
+}        
 ```
 
 ---
@@ -185,10 +212,10 @@ trait Optional[S, A]{
 
 ```scala
 sealed trait Json
-case class JsNumber(value: Double)
-case class JsString(value: String)
-case class JsArray(value: List[Json])
-case class JsObject(value: Map[String, Json])
+case class JsNumber(value: Double) extends Json
+case class JsString(value: String) extends Json
+case class JsArray(value: List[Json]) extends Json
+case class JsObject(value: Map[String, Json]) extends Json
 
 val jsNumber = Prism[Json, Double]    ({ case JsNumber(n) => Some(n); case _ => None }, JsNumber.apply)
 val jsArray  = Prism[Json, List[Json]]({ case JsArray(a)  => Some(a); case _ => None }, JsArray.apply)
@@ -246,10 +273,12 @@ import monocle.function.index._
 
 # Links
 
-[[1]](http://functional-wizardry.blogspot.co.uk/2014/02/lens-implementation-part-1.html) Blog post explaining Lens implementation in Monocle
+[[1]](https://github.com/julien-truffaut/Monocle) Monocle github project
 
-[[2]](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation) Simon Peyton Jones presentation of Lens library at the London Scala exchange 2013
+[[2]](http://functional-wizardry.blogspot.co.uk/2014/02/lens-implementation-part-1.html) Blog post explaining Lens implementation in Monocle
 
-[[3]](https://dl.dropboxusercontent.com/u/7810909/media/doc/lenses2.pdf) Tony Mauris's history of Lenses history
+[[3]](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation) Simon Peyton Jones presentation of Lens library at the London Scala exchange 2013
 
-[[4]](https://www.youtube.com/watch?v=efv0SQNde5Q) Edward Kmett video of how to use Lenses with State Monad
+[[4]](https://dl.dropboxusercontent.com/u/7810909/media/doc/lenses2.pdf) Tony Mauris's history of Lenses history
+
+[[5]](https://www.youtube.com/watch?v=efv0SQNde5Q) Edward Kmett video of how to use Lenses with State Monad
