@@ -25,9 +25,9 @@ trait Lens[S, A]{
 ∀ s: S       => set(s, get(s)) == s 
 ∀ s: S, a: A => get(set(s, a)) == a 
 
-∀ s: S, a: A => set(s, set(s, a)) == set(s, a) 
-∀ s: S       => modify(s, id)  == s 
-∀ s: S, f,g: A => A => modifyF(f) . modifyF(g) == modifyF(f compose g)
+∀ s: S, a: A  => set(s, set(s, a)) == set(s, a) 
+∀ s: S        => modify(s, id)  == s 
+∀ f,g: A => A => modifyF(f) . modifyF(g) == modifyF(f compose g)
 ```
 
 ---
@@ -119,9 +119,9 @@ trait Prism[S, A]{
 ∀ a: A => getOption . reverseGet == Some(a) 
 ∀ s: S => getOption(s) map reverseGet == Some(s) || None
 
-∀ s: S, a: A        => set(s, set(s, a)) == set(s, a) 
-∀ s: S              => modify(s, id)  == s  
-∀ s: S, f,g: A => A => modifyF(f) . modifyF(g) == modifyF(f compose g)          
+∀ s: S, a: A  => set(s, set(s, a)) == set(s, a) 
+∀ s: S        => modify(s, id)  == s 
+∀ f,g: A => A => modifyF(f) . modifyF(g) == modifyF(f compose g)       
 ```
 
 ---
@@ -279,6 +279,6 @@ import monocle.function.index._
 
 [[3]](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation) Simon Peyton Jones presentation of Lens library at the London Scala exchange 2013
 
-[[4]](https://dl.dropboxusercontent.com/u/7810909/media/doc/lenses2.pdf) Tony Mauris's history of Lenses history
+[[4]](https://dl.dropboxusercontent.com/u/7810909/media/doc/lenses2.pdf) Tony Morris history of Lenses history
 
 [[5]](https://www.youtube.com/watch?v=efv0SQNde5Q) Edward Kmett video of how to use Lenses with State Monad
