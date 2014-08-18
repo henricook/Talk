@@ -76,14 +76,14 @@ config |-> client |-> endPoint |-> port set 5000
 ```scala
 
 
-def toogle(feature: SimpleLens[Switches, Boolean]): AppConfig => AppConfig =
+def toogle(feature: Lens[Switches, Boolean]): AppConfig => AppConfig =
   config => (switches compose feature).modify(config, !_)
 
 toogle(useFeature1)(config)
 toogle(useFeature2)(config)
 
 def toogleAllFeatures: AppConfig => AppConfig = 
-  toogle(useFeature1) compose toogle(useFeature2)
+  toogle(useFeature1) . toogle(useFeature2)
 
 toogleAllFeatures(config)
 
@@ -101,7 +101,7 @@ toogleAllFeatures(config)
 trait Prism[S, A]{
 
   def getOption(s: S): Option[A]
-  def reverseGet(a: A): S
+  def reconstruct(a: A): S
   
   def set(s: S, a: A): S
   def modify(s: S, f: A => A): S
@@ -116,8 +116,8 @@ trait Prism[S, A]{
 
 ```scala
 
-∀ a: A => getOption . reverseGet == Some(a) 
-∀ s: S => getOption(s) map reverseGet == Some(s) || None
+∀ a: A => getOption(reconstruct(a)) == Some(a) 
+∀ s: S => getOption(s) map reconstruct == Some(s) || None
 
 ∀ s: S, a: A  => set(s, set(s, a)) == set(s, a) 
 ∀ s: S        => modify(s, id)  == s 
@@ -129,7 +129,7 @@ trait Prism[S, A]{
 # Laws => Automatic Testing
 
 ```scala
-∀ s: S => getOption(s) map reverseGet == Some(s) || None
+∀ s: S => getOption(s) map reconstruct == Some(s) || None
 
 object Prism {
   def apply[S, A](_getOption: S => Option[A], _reverseGet: A => S): Prism[S, A]
@@ -143,8 +143,16 @@ stringToInt.getOption("hello")  == None
 stringToInt.getOption("999999999999999999") == None
 
 stringToInt.modify("1234", _ * 2) == "2468"
+```
 
-stringToInt.getOption("꩙") == Some(9) // WHAT ????
+---
+
+# Laws => Automatic Testing
+
+```scala
+
+
+stringToInt.getOption("꩙") == Some(9)
 
 ```
 
@@ -155,8 +163,10 @@ stringToInt.getOption("꩙") == Some(9) // WHAT ????
 ```scala
 def some[A] = Prism[Option[A], A](identity, a => Some(a))
 
-some.get(Some(3)) == Some(3) 
-some.get(None)    == None    // Impressive :p
+some.getOption(Some(3)) == Some(3) 
+some.getOption(None)    == None    // Impressive :p
+some.reconstruct(3)     == Some(3)
+
 some.modify(Some(3), _ * 2) == Some(6)
 
 def cons[A] = Prism[List[A], (A, List[A])]({
@@ -164,7 +174,7 @@ def cons[A] = Prism[List[A], (A, List[A])]({
 	case x :: xs => Some(x, xs)
 }, (x, xs) => x :: xs)
 
-cons.get(List(1,2,3)) == Some(1, List(2, 3))
+cons.get(List(1,2,3)) == Some((1, List(2, 3)))
 cons.get(Nil)         == None
 ```
 ---
@@ -172,14 +182,12 @@ cons.get(Nil)         == None
 # Optics Composition
 
 ```scala
+
+
 Lens[S, A]  compose Prism[A, B] = ???[S, B]
 Prism[S, A] compose Lens[A, B]  = ???[S, B]
 
-val example1 = Some(Person("John", 25))
-
-(some compose age) ???
-
-val example2 = Person("John", 25, Some("john@gmail.com"))
+val example = Person("John", 25, Some("john@gmail.com"))
 
 (email compose some) ???
 
@@ -217,9 +225,15 @@ case class JsString(value: String) extends Json
 case class JsArray(value: List[Json]) extends Json
 case class JsObject(value: Map[String, Json]) extends Json
 
-val jsNumber = Prism[Json, Double]    ({ case JsNumber(n) => Some(n); case _ => None }, JsNumber.apply)
-val jsArray  = Prism[Json, List[Json]]({ case JsArray(a)  => Some(a); case _ => None }, JsArray.apply)
+val jsNumber: Prism[Json, Double] = ???
+val jsArray : Prism[Json, List[Json]] = ???
+```
 
+---
+
+# Json Example
+
+```scala
 val json: Json = JsObject(Map(
   "first_name" -> JsString("John"),
   "last_name"  -> JsString("Doe"),
@@ -235,6 +249,10 @@ val json: Json = JsObject(Map(
     ))
   ))
 ))
+
+
+jsNumber.getOption(json) shouldEqual None
+jsObject.getOption(json) shouldEqual Some(Map(...))
 ```
 
 ---
@@ -242,12 +260,8 @@ val json: Json = JsObject(Map(
 # Json Example
 
 ```scala
-
-
-jsNumber.getOption(json) shouldEqual None
-jsObject.getOption(json) shouldEqual Some(Map(...))
    
-import monocle.function.index._
+import monocle.function._
    
 (jsObject compose index("first_name") compose jsString).getOption(json) == Some("John")
    
@@ -256,12 +270,17 @@ import monocle.function.index._
           compose index(1)
           compose jsObject
           compose index("age")
-          compose jsNumber).modify(json, _ + 1) == ???
+          compose jsNumber
+          ).modify(json, _ + 1)
+          
+(jsObject compose filterIndex(_.contains("name"))
+          compose jsString
+          ).modify(_.toUpperCase)
 ```
 
 ---
 
-# Disclaimer
+# Erratum
 
 *   Most Optics have 4 type parameters instead of 2 with 'simple' type alias: SimpleLens[S, A] == Lens[S, S, A, A]
 *   Type inference issues with compose made us create non overloaded compose versions: composeLens, composePrism, ...
