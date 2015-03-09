@@ -27,7 +27,7 @@ trait Lens[S, A]{
 
 ∀ s: S, a: A  => get(set(a)(s)) == a 
 
-∀ s: S, a: A  => set(set(a)(s))(s) == set(a)(s) 
+∀ s: S, a: A  => set(s)(set(a)(s)) == set(a)(s) 
 
 ∀ s: S        => modify(id)(s)  == s 
 ```
@@ -78,22 +78,22 @@ val newConfig = (client compose endPoint compose port).set(9999)(config)
 # More powerful Lens examples
 
 ```scala
-def toogleFeature1(config: AppConfig): AppConfig =
+def toggleFeature1(config: AppConfig): AppConfig =
   config.copy( 
     switches = config.switches.copy(
       useFeature1 = ! config.swicthes.useFeature1
     )
   )
 
-def toogle(feature: Lens[Switches, Boolean]): AppConfig => AppConfig =
+def toggle(feature: Lens[Switches, Boolean]): AppConfig => AppConfig =
   (switches compose feature).modify(b => ! b)
 
-toogle(useFeature1)(config)
+toggle(useFeature1)(config)
 
-val toogleAllFeatures: AppConfig => AppConfig = 
-  toogle(useFeature1) . toogle(useFeature2)
+val toggleAllFeatures: AppConfig => AppConfig = 
+  toggle(useFeature1) . toggle(useFeature2)
 
-toogleAllFeatures(config)
+toggleAllFeatures(config)
 
 ```
 
@@ -123,8 +123,6 @@ trait Prism[S, A]{
   def getOption(s: S): Option[A]
 
   def reverseGet(a: A): S
-  
-  def set(a: A)(s: S): S
 
   def modify(f: A => A)(s: S): S
   
@@ -145,7 +143,6 @@ trait Prism[S, A]{
    case None    => true
  }
 
-∀ s: S, a: A  => set(set(a)(s), s) == set a s 
 ∀ s: S        => modify(id)(s)  == s      
 ```
 
@@ -244,9 +241,9 @@ Prism[S, A] compose  Lens[A, B] = ???[S, B]
 
 val example = Person("John", 25, Some("john@gmail.com"))
 
-val email: Lens[Peson, Option[String]] = ...
+val email: Lens[Person, Option[String]] = ...
 
-(email compose some): ???
+(email compose some): ???[Person, String]
 
 ```
 
